@@ -9,6 +9,7 @@ import { EventsModule } from './events/events.module';
 import { TicketModule } from './ticket/ticket.module';
 import { NotificationModule } from './notification/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { QrCodeService } from './qr-code/qr-code.service';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { AnalyticsModule } from './analytics/analytics.module';
     AnalyticsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, QrCodeService],
 })
 export class AppModule {}
