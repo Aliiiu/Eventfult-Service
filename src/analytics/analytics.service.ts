@@ -1,26 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAnalyticsDto } from './dto/create-analytics.dto';
-import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Event } from 'src/events/entities/event.entity';
+import { Ticket } from 'src/ticket/entities/ticket.entity';
 
 @Injectable()
 export class AnalyticsService {
-  create(createAnalyticsDto: CreateAnalyticsDto) {
-    return 'This action adds a new analytics';
+  constructor(
+    @InjectModel(Ticket.name) private ticketModel: Model<Ticket>,
+    @InjectModel(Event.name) private eventModel: Model<Event>,
+  ) {}
+
+  async getEventAttendees(eventId: string) {
+    return this.ticketModel.countDocuments({ event: eventId, isScanned: true });
   }
 
-  findAll() {
-    return `This action returns all analytics`;
+  async getEventTicketsSold(eventId: string) {
+    return this.ticketModel.countDocuments({ event: eventId });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} analytics`;
+  async getTotalAttendees(creatorId: string) {
+    const events = await this.eventModel.find({ creator: creatorId });
+    const eventIds = events.map((event) => event._id);
+    return this.ticketModel.countDocuments({
+      event: { $in: eventIds },
+      isScanned: true,
+    });
   }
 
-  update(id: number, updateAnalyticsDto: UpdateAnalyticsDto) {
-    return `This action updates a #${id} analytics`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} analytics`;
+  async getTotalTicketsSold(creatorId: string) {
+    const events = await this.eventModel.find({ creator: creatorId });
+    const eventIds = events.map((event) => event._id);
+    return this.ticketModel.countDocuments({
+      event: { $in: eventIds },
+    });
   }
 }
