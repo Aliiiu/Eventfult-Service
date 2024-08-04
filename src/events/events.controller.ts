@@ -12,6 +12,7 @@ import {
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('events')
 @UseGuards()
@@ -19,6 +20,7 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
+  @Roles('creator')
   create(@Body() createEventDto: CreateEventDto, @Request() req) {
     return this.eventsService.create(createEventDto, req.user.id);
   }
@@ -39,11 +41,13 @@ export class EventsController {
   }
 
   @Patch(':id')
+  @Roles('creator')
   update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
     return this.eventsService.update(id, updateEventDto);
   }
 
   @Delete(':id')
+  @Roles('creator')
   remove(@Param('id') id: string) {
     return this.eventsService.remove(id);
   }
