@@ -1,34 +1,66 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateEventCreatorDto } from './dto/create-event-creator.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { UpdateEventCreatorDto } from './dto/update-event-creator.dto';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post('event-creator')
+  @Roles('creator')
+  createEventCreator(@Body() createEventCreatorDto: CreateEventCreatorDto) {
+    return this.usersService.createEventCreator(createEventCreatorDto);
+  }
+  @Post('attendee')
+  createAttendee(@Body() createEventCreatorDto: CreateEventCreatorDto) {
+    return this.usersService.createEventCreator(createEventCreatorDto);
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  @Get('event-creators')
+  findAllEventCreators() {
+    return this.usersService.findAllEventCreators();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get('attendees')
+  findAllAttendees() {
+    return this.usersService.findAllEventCreators();
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @Get('event-creator/:id')
+  findEventCreatorById(@Param('id') id: string) {
+    return this.usersService.findEventCreatorById(id);
+  }
+
+  @Get('event-creator/:id')
+  findAttendeeById(@Param('id') id: string) {
+    return this.usersService.findAttendeeById(id);
+  }
+
+  @Patch('event-creator/:id')
+  updateEventCreator(
+    @Param('id') id: string,
+    @Body() updateEventCreator: UpdateEventCreatorDto,
+  ) {
+    return this.usersService.updateEventCreator(id, updateEventCreator);
   }
 
   @Delete(':id')
+  @Roles('creator')
   remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+    return this.usersService.deleteUser(id);
   }
 }

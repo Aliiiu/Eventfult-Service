@@ -55,7 +55,7 @@ export class UsersService {
   }
 
   async updateEventCreator(
-    id: number,
+    id: string,
     updateEventCreatorDto: UpdateEventCreatorDto,
   ) {
     const updatedEventCreator = await this.eventCreatorModel
@@ -68,7 +68,7 @@ export class UsersService {
     return updatedEventCreator;
   }
 
-  async updateAttendee(id: number, updateAttendeeDto: UpdateAttendeeDto) {
+  async updateAttendee(id: string, updateAttendeeDto: UpdateAttendeeDto) {
     const updatedAttendee = await this.attendeeModel
       .findByIdAndUpdate(id, updateAttendeeDto, { new: true })
       .exec();
@@ -79,7 +79,7 @@ export class UsersService {
     return updatedAttendee;
   }
 
-  async deleteUser(id: number) {
+  async deleteUser(id: string) {
     const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
 
     if (!deletedUser) {
