@@ -12,5 +12,6 @@ import { QrCodeModule } from 'src/qr-code/qr-code.module';
   ],
   controllers: [TicketController],
   providers: [TicketService],
+  exports: [TicketService, MongooseModule],
 })
 export class TicketModule {}
