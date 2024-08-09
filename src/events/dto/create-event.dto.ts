@@ -4,6 +4,8 @@ import {
   IsNotEmpty,
   IsArray,
   IsMongoId,
+  IsNumber,
+  IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -43,8 +45,12 @@ export class CreateEventDto {
   @Type(() => String)
   attendees: string[];
 
-  @IsArray()
-  @IsMongoId({ each: true })
-  @Type(() => String)
-  tickets: string[];
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  totalTickets: number;
+
+  @IsNumber()
+  @IsPositive()
+  soldTickets: number;
 }

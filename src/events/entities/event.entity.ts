@@ -40,8 +40,11 @@ export class Event extends Document {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
   attendees: Types.ObjectId[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Ticket' }] })
-  tickets: Types.ObjectId[];
+  @Prop({ required: true })
+  totalTickets: number;
+
+  @Prop({ default: 0 })
+  soldTickets: number;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
