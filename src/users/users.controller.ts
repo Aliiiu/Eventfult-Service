@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -9,7 +8,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateEventCreatorDto } from './dto/create-event-creator.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -20,15 +18,15 @@ import { UpdateEventCreatorDto } from './dto/update-event-creator.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('event-creator')
-  @Roles('creator')
-  createEventCreator(@Body() createEventCreatorDto: CreateEventCreatorDto) {
-    return this.usersService.createEventCreator(createEventCreatorDto);
-  }
-  @Post('attendee')
-  createAttendee(@Body() createEventCreatorDto: CreateEventCreatorDto) {
-    return this.usersService.createEventCreator(createEventCreatorDto);
-  }
+  // @Post('event-creator')
+  // @Roles('creator')
+  // createEventCreator(@Body() createEventCreatorDto: CreateEventCreatorDto) {
+  //   return this.usersService.createEventCreator(createEventCreatorDto);
+  // }
+  // @Post('attendee')
+  // createAttendee(@Body() createEventCreatorDto: CreateEventCreatorDto) {
+  //   return this.usersService.createEventCreator(createEventCreatorDto);
+  // }
 
   @Get('event-creators')
   findAllEventCreators() {

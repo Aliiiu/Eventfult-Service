@@ -13,7 +13,9 @@ import { QrCodeService } from './qr-code/qr-code.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (ConfigService: ConfigService) => ({
