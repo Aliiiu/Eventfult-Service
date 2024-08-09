@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -22,8 +22,8 @@ export class EventsController {
 
   @Post()
   @Roles('creator')
-  create(@Body() createEventDto: CreateEventDto, @Request() req) {
-    return this.eventsService.create(createEventDto, req.user.id);
+  create(@Body() createEventDto: CreateEventDto, @Req() req: any) {
+    return this.eventsService.create(createEventDto, req.user.userId);
   }
 
   @Get()
@@ -36,7 +36,7 @@ export class EventsController {
     return this.eventsService.findOne(id);
   }
 
-  @Get(':creatorId')
+  @Get('/creator/:creatorId')
   findByCreator(@Param('creatorId') creatorId: string) {
     return this.eventsService.findByCreator(creatorId);
   }

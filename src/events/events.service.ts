@@ -75,7 +75,11 @@ export class EventsService {
   }
 
   async findByCreator(creatorId: string) {
-    return this.eventModel.find({ creator: creatorId }).exec();
+    const events = await this.eventModel.find({ creator: creatorId }).exec();
+    if (!events) {
+      throw new NotFoundException(`No events found`);
+    }
+    return events;
   }
 
   async update(id: string, updateEventDto: UpdateEventDto) {
