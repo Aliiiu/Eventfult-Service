@@ -1,24 +1,16 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Event } from './entities/event.entity';
 import { Model } from 'mongoose';
-import { Ticket } from 'src/ticket/entities/ticket.entity';
 import { User } from 'src/users/entities/user.entity';
-import { QrCodeService } from 'src/qr-code/qr-code.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectModel(Event.name) private readonly eventModel: Model<Event>,
-    @InjectModel(Ticket.name) private readonly ticketModel: Model<Ticket>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly qrCodeService: QrCodeService,
   ) {}
 
   async create(createEventDto: CreateEventDto, creatorId: string) {
@@ -31,35 +23,6 @@ export class EventsService {
       $push: { events: createdEvent.id },
     });
     return createdEvent;
-  }
-
-  async buyTicket(eventId: string, userId: string) {
-    const event = await this.eventModel.findById(eventId).exec();
-    if (!event) {
-      throw new NotFoundException(`Event not found`);
-    }
-
-    if (event.soldTickets >= event.totalTickets) {
-      throw new BadRequestException(`Event is sold out`);
-    }
-
-    const qrCode = await this.qrCodeService.generateCode(
-      `${eventId}-${userId}`,
-    );
-    const ticket = new this.ticketModel({
-      event: eventId,
-      user: userId,
-      qrCode,
-    });
-    await ticket.save();
-    await this.eventModel.findByIdAndUpdate(eventId, {
-      $inc: { soldTickets: 1 },
-      $push: { attendees: userId },
-    });
-    await this.userModel.findByIdAndUpdate(userId, {
-      $push: { attendedEvents: eventId },
-    });
-    return ticket;
   }
 
   async findAll() {

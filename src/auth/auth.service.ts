@@ -33,7 +33,6 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token);
       const user = await this.userService.findById(decoded.userId); // Adjust according to your user service method
-      console.log(user);
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
