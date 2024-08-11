@@ -9,12 +9,7 @@ import { UpdateAttendeeDto } from './dto/update-attendee.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    // @InjectModel(EventCreator.name)
-    // private eventCreatorModel: Model<EventCreator>,
-    // @InjectModel(Attendee.name) private attendeeModel: Model<Attendee>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async createEventCreator(createEventCreatorDto: CreateEventCreatorDto) {
     const createdEventCreator = new this.userModel(createEventCreatorDto);
@@ -27,11 +22,11 @@ export class UsersService {
   }
 
   async findAllEventCreators() {
-    return this.userModel.find().exec();
+    return this.userModel.find({ userType: 'creator' }).exec();
   }
 
   async findAllAttendees() {
-    return this.userModel.find().exec();
+    return this.userModel.find({ userType: 'attendee' }).exec();
   }
 
   async findEventCreatorById(id: string) {

@@ -25,7 +25,7 @@ export class UsersController {
 
   @Get('attendees')
   findAllAttendees() {
-    return this.usersService.findAllEventCreators();
+    return this.usersService.findAllAttendees();
   }
 
   @Get('event-creator/:id')
