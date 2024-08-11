@@ -10,6 +10,8 @@ import { TicketModule } from './ticket/ticket.module';
 import { NotificationModule } from './notification/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { QrCodeService } from './qr-code/qr-code.service';
+// import { APP_GUARD } from '@nestjs/core';
+// import { RolesGuard } from './auth/roles.guard';
 
 @Module({
   imports: [
