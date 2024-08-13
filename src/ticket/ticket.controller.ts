@@ -41,7 +41,6 @@ export class TicketController {
       createTicketDto.event,
       req.user?.userId,
     );
-    // return true;
   }
 
   @Get()
