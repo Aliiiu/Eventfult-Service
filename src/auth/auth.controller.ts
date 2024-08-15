@@ -25,4 +25,9 @@ export class AuthController {
   async registerAttendee(@Body() createAttendeeDto: CreateAttendeeDto) {
     return this.authService.registerAttendee(createAttendeeDto);
   }
+
+  @Post('validate-token')
+  async validateToken(@Body() token: string) {
+    return this.authService.validateToken(token);
+  }
 }
