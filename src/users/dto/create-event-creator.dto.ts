@@ -14,6 +14,10 @@ export class CreateEventCreatorDto extends CreateUserDto {
   @IsNotEmpty()
   organizationName: string;
 
+  @IsString()
+  @IsNotEmpty()
+  location?: string;
+
   @IsOptional()
   @IsUrl()
   organizationUrl?: string;

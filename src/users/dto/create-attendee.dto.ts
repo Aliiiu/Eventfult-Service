@@ -8,10 +8,6 @@ export class CreateAttendeeDto extends CreateUserDto {
   phoneNumber?: string;
 
   @IsOptional()
-  @IsString()
-  location?: string;
-
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   interests?: string[];
