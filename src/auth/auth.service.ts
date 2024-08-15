@@ -32,12 +32,13 @@ export class AuthService {
   async validateToken(token: string): Promise<any> {
     try {
       const decoded = this.jwtService.verify(token);
-      const user = await this.userService.findById(decoded.userId); // Adjust according to your user service method
+      const user = await this.userService.findById(decoded.sub); // Adjust according to your user service method
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
       return user;
     } catch (error) {
+      console.log(error);
       throw new UnauthorizedException('Invalid token');
     }
   }
