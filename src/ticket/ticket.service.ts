@@ -1,9 +1,9 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Ticket } from './entities/ticket.entity';
 import { Model } from 'mongoose';
@@ -21,77 +21,116 @@ export class TicketService {
   ) {}
 
   async buyTicket(eventId: string, userId: string) {
+    if (!eventId || !userId) {
+      throw new BadRequestException('Event ID and User ID must be provided');
+    }
+
     const event = await this.eventModel.findById(eventId).exec();
     if (!event) {
-      throw new NotFoundException(`Event not found`);
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     if (event.soldTickets >= event.totalTickets) {
       throw new BadRequestException(`Event is sold out`);
     }
 
-    const qrCode = await this.qrCodeService.generateCode(
-      `${eventId}-${userId}`,
-    );
-    const ticket = new this.ticketModel({
-      event: eventId,
-      user: userId,
-      qrCode,
-    });
-    await ticket.save();
-    await this.eventModel.findByIdAndUpdate(eventId, {
-      $inc: { soldTickets: 1 },
-      $push: { attendees: userId },
-    });
-    await this.userModel.findByIdAndUpdate(userId, {
-      $push: { attendedEvents: eventId },
-    });
-    return ticket;
-  }
+    const existingTicket = await this.ticketModel
+      .findOne({ event: eventId, user: userId })
+      .exec();
+    if (existingTicket) {
+      throw new BadRequestException(
+        `User has already purchased a ticket for this event`,
+      );
+    }
 
-  async findAll() {
-    return this.ticketModel.find();
-  }
+    try {
+      const qrCode = await this.qrCodeService.generateCode(
+        `${eventId}-${userId}`,
+      );
+      const ticket = new this.ticketModel({
+        event: eventId,
+        user: userId,
+        qrCode,
+      });
 
-  async findOne(id: string) {
-    return this.ticketModel.findById(id);
+      await ticket.save();
+
+      await this.eventModel.findByIdAndUpdate(eventId, {
+        $inc: { soldTickets: 1 },
+        $push: { attendees: userId },
+      });
+
+      await this.userModel.findByIdAndUpdate(userId, {
+        $push: { attendedEvents: eventId },
+      });
+
+      return ticket;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `An error occurred while purchasing the ticket: ${error.message}`,
+      );
+    }
   }
 
   async findByEvent(eventId: string) {
-    return this.ticketModel.find({ event: eventId });
+    if (!eventId) {
+      throw new BadRequestException('Event ID must be provided');
+    }
+
+    const tickets = await this.ticketModel.find({ event: eventId }).exec();
+    if (!tickets || tickets.length === 0) {
+      throw new NotFoundException(
+        `No tickets found for event with ID ${eventId}`,
+      );
+    }
+
+    return tickets;
   }
 
   async findByAttendee(attendeeId: string) {
-    return this.ticketModel.find({ user: attendeeId });
-  }
-
-  async update(id: string, updateTicketDto: UpdateTicketDto) {
-    const updatedTicket = await this.ticketModel.findByIdAndUpdate(
-      id,
-      updateTicketDto,
-      { new: true },
-    );
-
-    if (!updatedTicket) {
-      throw new NotFoundException('Ticket not found');
+    if (!attendeeId) {
+      throw new BadRequestException('Attendee ID must be provided');
     }
 
-    return updatedTicket;
+    const tickets = await this.ticketModel.find({ user: attendeeId }).exec();
+    if (!tickets || tickets.length === 0) {
+      throw new NotFoundException(
+        `No tickets found for attendee with ID ${attendeeId}`,
+      );
+    }
+
+    return tickets;
   }
 
   async scanTicket(id: string) {
-    const ticket = await this.ticketModel.findById(id);
-    ticket.isScanned = true;
-    return ticket.save();
-  }
-
-  async remove(id: string) {
-    const deletedTicket = await this.ticketModel.findByIdAndDelete(id);
-
-    if (!deletedTicket) {
-      throw new NotFoundException('Ticket not found');
+    if (!id) {
+      throw new BadRequestException('Ticket ID must be provided');
     }
 
-    return deletedTicket;
+    const ticket = await this.ticketModel.findById(id).exec();
+    if (!ticket) {
+      throw new NotFoundException(`Ticket with ID ${id} not found`);
+    }
+
+    if (ticket.isScanned) {
+      throw new BadRequestException(
+        `Ticket with ID ${id} has already been scanned`,
+      );
+    }
+
+    try {
+      ticket.isScanned = true;
+      await ticket.save();
+      return ticket;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `An error occurred while scanning the ticket: ${error.message}`,
+      );
+    }
   }
 }
