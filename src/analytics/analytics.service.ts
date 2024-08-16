@@ -31,7 +31,6 @@ export class AnalyticsService {
   async getTotalTicketsSold(creatorId: string) {
     const events = await this.eventModel.find({ creator: creatorId });
     const eventIds = events.map((event) => event._id);
-    console.log(eventIds);
     return this.ticketModel.countDocuments({
       event: { $in: eventIds },
     });
