@@ -21,6 +21,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 interface User {
   userId: string;
@@ -30,6 +31,7 @@ interface RequestWithUser extends Request {
   user: User;
 }
 
+@SkipThrottle()
 @ApiTags('Ticket')
 @Controller('ticket')
 @UseGuards(JwtAuthGuard, RolesGuard)

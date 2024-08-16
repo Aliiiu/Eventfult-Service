@@ -10,6 +10,8 @@ import { TicketModule } from './ticket/ticket.module';
 import { NotificationModule } from './notification/notification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { QrCodeService } from './qr-code/qr-code.service';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -23,6 +25,18 @@ import { QrCodeService } from './qr-code/qr-code.service';
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get('THROTTLE_TTL', 60),
+            limit: configService.get('THROTTLE_LIMIT', 10),
+          },
+        ],
+      }),
+      inject: [ConfigService],
+    }),
     UsersModule,
     AuthModule,
     EventsModule,
@@ -31,6 +45,10 @@ import { QrCodeService } from './qr-code/qr-code.service';
     AnalyticsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, QrCodeService],
+  providers: [
+    AppService,
+    QrCodeService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

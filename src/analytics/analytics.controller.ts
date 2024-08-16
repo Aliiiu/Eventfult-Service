@@ -10,7 +10,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('Analytics')
 @ApiBearerAuth()
 @Controller('analytics')

@@ -23,7 +23,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('events')
 @ApiBearerAuth()
 @Controller('events')
