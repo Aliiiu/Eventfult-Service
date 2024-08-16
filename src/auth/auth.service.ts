@@ -20,11 +20,11 @@ export class AuthService {
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new Error('No user found');
+      throw new UnauthorizedException('No user found');
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Invalid password');
+      throw new UnauthorizedException('Invalid password');
     }
     return user;
   }

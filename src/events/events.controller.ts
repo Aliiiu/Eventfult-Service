@@ -24,7 +24,7 @@ export class EventsController {
   @Post()
   @Roles('creator')
   create(@Body() createEventDto: CreateEventDto, @Req() req: any) {
-    return this.eventsService.create(createEventDto, req.user.userId);
+    return this.eventsService.create(createEventDto, req.user.sub);
   }
 
   @Get()
