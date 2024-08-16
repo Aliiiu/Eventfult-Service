@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
@@ -12,37 +16,103 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async createEventCreator(createEventCreatorDto: CreateEventCreatorDto) {
-    const createdEventCreator = new this.userModel(createEventCreatorDto);
-    return createdEventCreator.save();
+    try {
+      const createdEventCreator = new this.userModel(createEventCreatorDto);
+      return await createdEventCreator.save();
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create event creator');
+    }
   }
 
   async createAttendee(createAttendeeDto: CreateAttendeeDto) {
-    const createdAttendee = new this.userModel(createAttendeeDto);
-    return createdAttendee.save();
+    try {
+      const createdAttendee = new this.userModel(createAttendeeDto);
+      return await createdAttendee.save();
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create attendee');
+    }
   }
 
   async findAllEventCreators() {
-    return this.userModel.find({ userType: 'creator' }).exec();
+    try {
+      return await this.userModel.find({ userType: 'creator' }).exec();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve event creators',
+      );
+    }
   }
 
   async findAllAttendees() {
-    return this.userModel.find({ userType: 'attendee' }).exec();
+    try {
+      return await this.userModel.find({ userType: 'attendee' }).exec();
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to retrieve attendees');
+    }
   }
 
   async findEventCreatorById(id: string) {
-    return this.userModel.findById(id).exec();
+    try {
+      const eventCreator = await this.userModel.findById(id).exec();
+      if (!eventCreator || eventCreator.userType !== 'creator') {
+        throw new NotFoundException('Event creator not found');
+      }
+      return eventCreator;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to retrieve event creator',
+      );
+    }
   }
 
   async findAttendeeById(id: string) {
-    return this.userModel.findById(id).exec();
+    try {
+      const attendee = await this.userModel.findById(id).exec();
+      if (!attendee || attendee.userType !== 'attendee') {
+        throw new NotFoundException('Attendee not found');
+      }
+      return attendee;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve attendee');
+    }
   }
 
   async findByEmail(email: string) {
-    return this.userModel.findOne({ email }).exec();
+    try {
+      const user = await this.userModel.findOne({ email }).exec();
+      if (!user) {
+        throw new NotFoundException('User with this email not found');
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to retrieve user by email',
+      );
+    }
   }
 
   async findById(id: string) {
-    return this.userModel.findById(id).exec();
+    try {
+      const user = await this.userModel.findById(id).exec();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve user');
+    }
   }
 
   async updateEventCreator(
