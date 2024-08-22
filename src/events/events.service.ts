@@ -9,12 +9,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Event } from './entities/event.entity';
 import { Model } from 'mongoose';
 import { User } from 'src/users/entities/user.entity';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectModel(Event.name) private readonly eventModel: Model<Event>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(createEventDto: CreateEventDto, creatorId: string) {
@@ -37,8 +39,20 @@ export class EventsService {
 
   async findAll() {
     try {
-      return await this.eventModel.find().exec();
+      const cachedEvents = await this.redisService.get('events');
+
+      if (cachedEvents) {
+        console.log('cache hit');
+        return cachedEvents;
+      }
+
+      const events = await this.eventModel.find().exec();
+
+      await this.redisService.set('events', events, 60 * 1000);
+
+      return events;
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException('Failed to retrieve events');
     }
   }

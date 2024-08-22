@@ -12,7 +12,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { QrCodeService } from './qr-code/qr-code.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-import { CacheModule, CacheStoreFactory } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
+import { RedisService } from './redis/redis.service';
 import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
@@ -39,12 +40,15 @@ import * as redisStore from 'cache-manager-redis-store';
       }),
       inject: [ConfigService],
     }),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      store: redisStore as unknown as CacheStoreFactory,
-      host: String(process.env.REDIS_HOST),
-      port: process.env.REDIS_PORT,
-      ttl: Number(process.env.REDIS_TTL),
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        ttl: Number(configService.get('REDIS_TTL')),
+        host: configService.get('REDIS_HOST'),
+        port: parseInt(configService.get('REDIS_PORT')),
+      }),
     }),
     UsersModule,
     AuthModule,
@@ -58,6 +62,8 @@ import * as redisStore from 'cache-manager-redis-store';
     AppService,
     QrCodeService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    RedisService,
   ],
+  exports: [RedisService],
 })
 export class AppModule {}
