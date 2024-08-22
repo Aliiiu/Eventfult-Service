@@ -12,6 +12,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { QrCodeService } from './qr-code/qr-code.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CacheModule, CacheStoreFactory } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -36,6 +38,13 @@ import { APP_GUARD } from '@nestjs/core';
         ],
       }),
       inject: [ConfigService],
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore as unknown as CacheStoreFactory,
+      host: String(process.env.REDIS_HOST),
+      port: process.env.REDIS_PORT,
+      ttl: Number(process.env.REDIS_TTL),
     }),
     UsersModule,
     AuthModule,
