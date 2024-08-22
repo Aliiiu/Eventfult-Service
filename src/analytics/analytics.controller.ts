@@ -22,12 +22,31 @@ export class AnalyticsController {
 
   @Get('event-attendees/:eventId')
   @Roles('creator')
-  @ApiOperation({ summary: 'Get event attendees' })
+  @ApiOperation({ summary: 'Get total attendees specific to this event' })
   @ApiParam({ name: 'eventId', type: String, description: 'ID of the event' })
-  @ApiResponse({ status: 200, description: 'List of event attendees' })
+  @ApiResponse({
+    status: 200,
+    description: 'Total number of attendees specific to this event',
+  })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   getEventAttendees(@Param('eventId') eventId: string) {
-    return this.analyticsService.getEventAttendees(eventId);
+    return this.analyticsService.getTotalEventAttendees(eventId);
+  }
+
+  @Get('total-attendees/:creatorId')
+  @Roles('creator')
+  @ApiOperation({
+    summary: 'Get total attendees this creator has had all time',
+  })
+  @ApiParam({
+    name: 'creatorId',
+    type: String,
+    description: 'ID of the creator',
+  })
+  @ApiResponse({ status: 200, description: 'Total number of attendees' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  getTotalAttendees(@Param('creatorId') creatorId: string) {
+    return this.analyticsService.getTotalAttendees(creatorId);
   }
 
   @Get('event-tickets-sold/:eventId')
@@ -38,20 +57,6 @@ export class AnalyticsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   getEventTicketsSold(@Param('eventId') eventId: string) {
     return this.analyticsService.getEventTicketsSold(eventId);
-  }
-
-  @Get('total-attendees/:creatorId')
-  @Roles('creator')
-  @ApiOperation({ summary: 'Get total attendees by creator' })
-  @ApiParam({
-    name: 'creatorId',
-    type: String,
-    description: 'ID of the creator',
-  })
-  @ApiResponse({ status: 200, description: 'Total number of attendees' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  getTotalAttendees(@Param('creatorId') creatorId: string) {
-    return this.analyticsService.getTotalAttendees(creatorId);
   }
 
   @Get('total-tickets-sold/:creatorId')

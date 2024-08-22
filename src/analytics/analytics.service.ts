@@ -6,6 +6,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Event } from 'src/events/entities/event.entity';
+import { RedisService } from 'src/redis/redis.service';
 import { Ticket } from 'src/ticket/entities/ticket.entity';
 
 @Injectable()
@@ -13,14 +14,30 @@ export class AnalyticsService {
   constructor(
     @InjectModel(Ticket.name) private ticketModel: Model<Ticket>,
     @InjectModel(Event.name) private eventModel: Model<Event>,
+    private redisService: RedisService,
   ) {}
 
-  async getEventAttendees(eventId: string) {
+  async getTotalEventAttendees(eventId: string) {
     try {
+      const cachedEventAttendeesCount = await this.redisService.get(
+        `event:${eventId}:attendeesCount`,
+      );
+
+      if (cachedEventAttendeesCount) {
+        return Number(cachedEventAttendeesCount);
+      }
+
       const attendeesCount = await this.ticketModel.countDocuments({
         event: eventId,
         isScanned: true,
       });
+
+      await this.redisService.set(
+        `event:${eventId}:attendeesCount`,
+        attendeesCount,
+        60 * 1000,
+      );
+
       if (!attendeesCount) {
         throw new NotFoundException(
           `No attendees found for event with ID ${eventId}`,
@@ -34,8 +51,39 @@ export class AnalyticsService {
     }
   }
 
+  async getTotalAttendees(creatorId: string) {
+    try {
+      const cacheKey = `creator:${creatorId}:allTimeAttendeesCount`;
+      const cachedAllTimeAttendeesCount = await this.redisService.get(cacheKey);
+
+      if (cachedAllTimeAttendeesCount) {
+        return Number(cachedAllTimeAttendeesCount);
+      }
+      const events = await this.findEventsByCreator(creatorId);
+      const eventIds = events.map((event) => event._id);
+      const totalAttendees = await this.ticketModel.countDocuments({
+        event: { $in: eventIds },
+        isScanned: true,
+      });
+
+      await this.redisService.set(cacheKey, totalAttendees, 60 * 1000);
+      return totalAttendees;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to get total attendees: ${error.message}`,
+      );
+    }
+  }
+
   async getEventTicketsSold(eventId: string) {
     try {
+      const cacheKey = `event:${eventId}:ticketsSoldCount`;
+      const cachedTicketsSoldCount = await this.redisService.get(cacheKey);
+
+      if (cachedTicketsSoldCount) {
+        return Number(cachedTicketsSoldCount);
+      }
+
       const ticketsSoldCount = await this.ticketModel.countDocuments({
         event: eventId,
       });
@@ -44,6 +92,8 @@ export class AnalyticsService {
           `No tickets sold found for event with ID ${eventId}`,
         );
       }
+
+      await this.redisService.set(cacheKey, ticketsSoldCount, 60 * 1000);
       return ticketsSoldCount;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -68,24 +118,14 @@ export class AnalyticsService {
     }
   }
 
-  async getTotalAttendees(creatorId: string): Promise<number> {
+  async getTotalTicketsSold(creatorId: string) {
     try {
-      const events = await this.findEventsByCreator(creatorId);
-      const eventIds = events.map((event) => event._id);
-      const totalAttendees = await this.ticketModel.countDocuments({
-        event: { $in: eventIds },
-        isScanned: true,
-      });
-      return totalAttendees;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to get total attendees: ${error.message}`,
-      );
-    }
-  }
+      const cacheKey = `creator:${creatorId}:totalTicketsSold`;
+      const cachedTotalTicketsSold = await this.redisService.get(cacheKey);
 
-  async getTotalTicketsSold(creatorId: string): Promise<number> {
-    try {
+      if (cachedTotalTicketsSold) {
+        return Number(cachedTotalTicketsSold);
+      }
       const events = await this.findEventsByCreator(creatorId);
       const eventIds = events.map((event) => event._id);
       const totalTicketsSold = await this.ticketModel.countDocuments({
