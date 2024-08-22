@@ -27,12 +27,19 @@ export class EventsService {
       });
       await createdEvent.save();
 
+      await this.redisService.set(
+        `event:${createdEvent.id}`,
+        createdEvent,
+        60 * 1000,
+      );
+
       await this.userModel.findByIdAndUpdate(creatorId, {
         $push: { events: createdEvent.id },
       });
 
       return createdEvent;
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException('Failed to create event');
     }
   }
@@ -42,7 +49,6 @@ export class EventsService {
       const cachedEvents = await this.redisService.get('events');
 
       if (cachedEvents) {
-        console.log('cache hit');
         return cachedEvents;
       }
 
@@ -59,7 +65,16 @@ export class EventsService {
 
   async findOne(id: string) {
     try {
+      const cachedEvents = await this.redisService.get(`event:${id}`);
+
+      if (cachedEvents) {
+        return cachedEvents;
+      }
       const event = await this.eventModel.findById(id).exec();
+
+      if (event) {
+        await this.redisService.set(`event:${id}`, event, 60 * 1000);
+      }
 
       if (!event) {
         throw new NotFoundException(`Event with id ${id} not found`);
@@ -67,6 +82,7 @@ export class EventsService {
 
       return event;
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -76,7 +92,22 @@ export class EventsService {
 
   async findByCreator(creatorId: string) {
     try {
+      const cachedEvents = await this.redisService.get(
+        `eventCreator:${creatorId}`,
+      );
+
+      if (cachedEvents) {
+        return cachedEvents;
+      }
       const events = await this.eventModel.find({ creator: creatorId }).exec();
+
+      if (events) {
+        await this.redisService.set(
+          `eventCreator:${creatorId}`,
+          events,
+          60 * 1000,
+        );
+      }
 
       if (!events) {
         throw new NotFoundException(
@@ -86,6 +117,7 @@ export class EventsService {
 
       return events;
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -101,12 +133,19 @@ export class EventsService {
         .findByIdAndUpdate(id, updateEventDto, { new: true })
         .exec();
 
+      if (updatedEvent) {
+        await this.redisService.set(`event:${id}`, updatedEvent, 60 * 1000);
+      } else {
+        await this.redisService.del(`event:${id}`);
+      }
+
       if (!updatedEvent) {
         throw new NotFoundException(`Event with id ${id} not found`);
       }
 
       return updatedEvent;
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -118,12 +157,17 @@ export class EventsService {
     try {
       const deletedEvent = await this.eventModel.findByIdAndDelete(id).exec();
 
+      if (deletedEvent) {
+        await this.redisService.del(`event:${id}`);
+      }
+
       if (!deletedEvent) {
         throw new NotFoundException(`Event with id ${id} not found`);
       }
 
       return deletedEvent;
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException) {
         throw error;
       }
