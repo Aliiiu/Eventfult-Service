@@ -9,14 +9,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Event } from './entities/event.entity';
 import { Model } from 'mongoose';
 import { User } from 'src/users/entities/user.entity';
-import { RedisService } from 'src/redis/redis.service';
+import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectModel(Event.name) private readonly eventModel: Model<Event>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly redisService: RedisService,
+    private readonly cachService: CacheService,
   ) {}
 
   async create(createEventDto: CreateEventDto, creatorId: string) {
@@ -27,7 +27,7 @@ export class EventsService {
       });
       await createdEvent.save();
 
-      await this.redisService.set(
+      await this.cachService.set(
         `event:${createdEvent.id}`,
         createdEvent,
         60 * 1000,
@@ -46,7 +46,7 @@ export class EventsService {
 
   async findAll() {
     try {
-      const cachedEvents = await this.redisService.get('events');
+      const cachedEvents = await this.cachService.get('events');
 
       if (cachedEvents) {
         return cachedEvents;
@@ -54,7 +54,7 @@ export class EventsService {
 
       const events = await this.eventModel.find().exec();
 
-      await this.redisService.set('events', events, 60 * 1000);
+      await this.cachService.set('events', events, 60 * 1000);
 
       return events;
     } catch (error) {
@@ -65,7 +65,7 @@ export class EventsService {
 
   async findOne(id: string) {
     try {
-      const cachedEvents = await this.redisService.get(`event:${id}`);
+      const cachedEvents = await this.cachService.get(`event:${id}`);
 
       if (cachedEvents) {
         return cachedEvents;
@@ -73,7 +73,7 @@ export class EventsService {
       const event = await this.eventModel.findById(id).exec();
 
       if (event) {
-        await this.redisService.set(`event:${id}`, event, 60 * 1000);
+        await this.cachService.set(`event:${id}`, event, 60 * 1000);
       }
 
       if (!event) {
@@ -92,7 +92,7 @@ export class EventsService {
 
   async findByCreator(creatorId: string) {
     try {
-      const cachedEvents = await this.redisService.get(
+      const cachedEvents = await this.cachService.get(
         `eventCreator:${creatorId}`,
       );
 
@@ -102,7 +102,7 @@ export class EventsService {
       const events = await this.eventModel.find({ creator: creatorId }).exec();
 
       if (events) {
-        await this.redisService.set(
+        await this.cachService.set(
           `eventCreator:${creatorId}`,
           events,
           60 * 1000,
@@ -134,9 +134,9 @@ export class EventsService {
         .exec();
 
       if (updatedEvent) {
-        await this.redisService.set(`event:${id}`, updatedEvent, 60 * 1000);
+        await this.cachService.set(`event:${id}`, updatedEvent, 60 * 1000);
       } else {
-        await this.redisService.del(`event:${id}`);
+        await this.cachService.del(`event:${id}`);
       }
 
       if (!updatedEvent) {
@@ -158,7 +158,7 @@ export class EventsService {
       const deletedEvent = await this.eventModel.findByIdAndDelete(id).exec();
 
       if (deletedEvent) {
-        await this.redisService.del(`event:${id}`);
+        await this.cachService.del(`event:${id}`);
       }
 
       if (!deletedEvent) {

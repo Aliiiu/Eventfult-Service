@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { CacheService } from 'src/cache/cache.service';
 import { Event } from 'src/events/entities/event.entity';
-import { RedisService } from 'src/redis/redis.service';
 import { Ticket } from 'src/ticket/entities/ticket.entity';
 
 @Injectable()
@@ -14,12 +14,12 @@ export class AnalyticsService {
   constructor(
     @InjectModel(Ticket.name) private ticketModel: Model<Ticket>,
     @InjectModel(Event.name) private eventModel: Model<Event>,
-    private redisService: RedisService,
+    private cachService: CacheService,
   ) {}
 
   async getTotalEventAttendees(eventId: string) {
     try {
-      const cachedEventAttendeesCount = await this.redisService.get(
+      const cachedEventAttendeesCount = await this.cachService.get(
         `event:${eventId}:attendeesCount`,
       );
 
@@ -32,7 +32,7 @@ export class AnalyticsService {
         isScanned: true,
       });
 
-      await this.redisService.set(
+      await this.cachService.set(
         `event:${eventId}:attendeesCount`,
         attendeesCount,
         60 * 1000,
@@ -54,7 +54,7 @@ export class AnalyticsService {
   async getTotalAttendees(creatorId: string) {
     try {
       const cacheKey = `creator:${creatorId}:allTimeAttendeesCount`;
-      const cachedAllTimeAttendeesCount = await this.redisService.get(cacheKey);
+      const cachedAllTimeAttendeesCount = await this.cachService.get(cacheKey);
 
       if (cachedAllTimeAttendeesCount) {
         return Number(cachedAllTimeAttendeesCount);
@@ -66,7 +66,7 @@ export class AnalyticsService {
         isScanned: true,
       });
 
-      await this.redisService.set(cacheKey, totalAttendees, 60 * 1000);
+      await this.cachService.set(cacheKey, totalAttendees, 60 * 1000);
       return totalAttendees;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -78,7 +78,7 @@ export class AnalyticsService {
   async getEventTicketsSold(eventId: string) {
     try {
       const cacheKey = `event:${eventId}:ticketsSoldCount`;
-      const cachedTicketsSoldCount = await this.redisService.get(cacheKey);
+      const cachedTicketsSoldCount = await this.cachService.get(cacheKey);
 
       if (cachedTicketsSoldCount) {
         return Number(cachedTicketsSoldCount);
@@ -93,7 +93,7 @@ export class AnalyticsService {
         );
       }
 
-      await this.redisService.set(cacheKey, ticketsSoldCount, 60 * 1000);
+      await this.cachService.set(cacheKey, ticketsSoldCount, 60 * 1000);
       return ticketsSoldCount;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -121,7 +121,7 @@ export class AnalyticsService {
   async getTotalTicketsSold(creatorId: string) {
     try {
       const cacheKey = `creator:${creatorId}:totalTicketsSold`;
-      const cachedTotalTicketsSold = await this.redisService.get(cacheKey);
+      const cachedTotalTicketsSold = await this.cachService.get(cacheKey);
 
       if (cachedTotalTicketsSold) {
         return Number(cachedTotalTicketsSold);

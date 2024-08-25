@@ -4,7 +4,7 @@ import { AnalyticsController } from './analytics.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Ticket, TicketSchema } from 'src/ticket/entities/ticket.entity';
 import { EventSchema } from 'src/events/entities/event.entity';
-import { RedisService } from 'src/redis/redis.service';
+import { CacheService } from 'src/cache/cache.service';
 
 @Module({
   imports: [
@@ -14,6 +14,6 @@ import { RedisService } from 'src/redis/redis.service';
     ]),
   ],
   controllers: [AnalyticsController],
-  providers: [AnalyticsService, RedisService],
+  providers: [AnalyticsService, CacheService],
 })
 export class AnalyticsModule {}

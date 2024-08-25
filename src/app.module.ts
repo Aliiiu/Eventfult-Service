@@ -14,7 +14,6 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { RedisService } from './redis/redis.service';
-import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -44,7 +43,6 @@ import * as redisStore from 'cache-manager-redis-store';
       isGlobal: true,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: redisStore,
         ttl: Number(configService.get('REDIS_TTL')),
         host: configService.get('REDIS_HOST'),
         port: parseInt(configService.get('REDIS_PORT')),

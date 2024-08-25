@@ -5,7 +5,7 @@ import { Event, EventSchema } from './entities/event.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { QrCodeModule } from 'src/qr-code/qr-code.module';
 import { UsersModule } from 'src/users/users.module';
-import { RedisService } from 'src/redis/redis.service';
+import { CacheService } from 'src/cache/cache.service';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { RedisService } from 'src/redis/redis.service';
     MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
   ],
   controllers: [EventsController],
-  providers: [EventsService, RedisService],
+  providers: [EventsService, CacheService],
   exports: [EventsService, MongooseModule],
 })
 export class EventsModule {}
